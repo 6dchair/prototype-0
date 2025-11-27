@@ -56,9 +56,13 @@ int AfterEqualsCheck(char *buffer, int *startCounter, int allowClosing) {
                 char var_name[MAX_VAR_LENGTH];
                 strncpy(var_name, buffer + start, len);
                 var_name[len] = '\0';
+
                 // variable must be declared
-                if(!IsVariableDeclared(var_name))
+                if(!IsVariableDeclared(var_name)) {
+                    printf("variable is not yet declared\n");
                     return 0;
+                }
+               
                 expectOperand = 0; // next expect operator
             }
             else if(buffer[counter] == '-') {
@@ -159,6 +163,22 @@ ErrorType ParseVariableAssignment(char *buffer, int *startIndex, char *errinfo) 
     while(buffer[i] == ' ')
         i++;
 
+    // redeclared?
+    // check for redeclaration b4 declaring it
+    if(IsVariableDeclared(var_name)) {
+        strcpy(errinfo, var_name);
+        return ERR_REDECLARED;
+    }
+
+    // store variable
+    // declare var immediately/add to te symbol table
+    strcpy(vars[valid_buffer_counter], var_name);
+    valid_buffer_counter++;
+
+    // skip trailing spaces after variable/init
+    while(buffer[i] == ' ')
+        i++;
+
     // optional initialization '='
     if(buffer[i] == '=') {
         i++; // consume '='
@@ -167,25 +187,15 @@ ErrorType ParseVariableAssignment(char *buffer, int *startIndex, char *errinfo) 
 
         // validate expression
         if(!AfterEqualsCheck(buffer, &i, 0)) {
+            valid_buffer_counter--; // undo the declaration to prevent polluting the symbol table 
             strcpy(errinfo, var_name);
             return ERR_INVALID_EXPRESSION;
         }
     }
-
-    // redeclared?
-    if(IsVariableDeclared(var_name)) {
-        strcpy(errinfo, var_name);
-        return ERR_REDECLARED;
-    }
-
-    // store variable
-    strcpy(vars[valid_buffer_counter], var_name);
-    valid_buffer_counter++;
-
+    
     // skip trailing spaces after variable/init
     while(buffer[i] == ' ')
         i++;
-
     *startIndex = i;
     return ERR_NONE;
 }
@@ -408,9 +418,10 @@ ErrorType StartsWithVariableName(char *buffer, char *errinfo) {
             i++;
 
         // validate the expression after '='
-        if(!AfterEqualsCheck(buffer, &i, 0))
+        if(!AfterEqualsCheck(buffer, &i, 0)) {
             return ERR_INVALID_EXPRESSION;
-
+        }
+               
         // skip spaces after expression
         while(buffer[i] == ' ')
             i++;
