@@ -1,0 +1,48 @@
+Content: Custom Programming Language CFG & Sample Code Using the Language
+Language name: p.0 (read as "P-zero") - Prototype Zero
+
+(1) Nonterminals
+        { PROGRAM, DECLS, DECL, TYPE, VARLIST, STMTS, STMT, SIMPLE_STMT
+        ASSIGN, EXPR, TERM, FACTOR, PRINT, PRINT_PARTS, PRINT_PART }
+(2) Terminals
+	      { "int",  "p",  "=",  "+",  "-",  "*",  "/",  "(",  ")",  ",",  ":",  ">>>",  "<<<" }
+(3) Token classes:
+        ID: letter (letter | digit | "_")*
+        NUM: digit+
+        STR:  ' " ' (letter | digit | symbol | ESCAPE)* ' " ' (where symbol = printable ASCII except ")
+        ESCAPE: '\' ( 'n' | 't' | ' " ' | '\' )
+(3) Start symbol: PROGRAM
+(4) Production rules:
+        PROGRAM -> ">>>" DECLS STMTS "<<<"
+        DECLS -> DECL DECLS ∣ ε
+        DECL -> TYPE VARLIST
+        TYPE -> "int"
+        VARLIST -> VAR_INIT | VAR_INIT "," VARLIST
+        VAR_INIT -> ID | ID "=" EXPR	// optional initialization
+        STMTS -> STMT STMTS ∣ STMT
+        STMT -> ASSIGN ∣ PRINT ∣ DECL ∣ SIMPLE_STMT
+        SIMPLE_STMT -> STMT | STMT "," STMT
+        ASSIGN -> ID "=" EXPR
+        EXPR -> EXPR "+" TERM ∣ EXPR "-" TERM | TERM
+        TERM -> TERM "*" FACTOR ∣ TERM "/" FACTOR | FACTOR
+        FACTOR -> NUM ∣ ID ∣ "(" EXPR ")"
+        PRINT -> "p" ":" PRINT_PARTS
+        PRINT_PARTS -> PRINT_PART ∣ PRINT_PART "," PRINT_PARTS
+        PRINT_PART -> STR ∣ ID
+
+*** Note: 
+      	//, \n, \t, \", & whitespaces will be handled by the lexer
+
+Sample code using p.0:
+
+      >>>	// start
+      
+      int x = 2, y 
+      y = 3, int sum = x + y 
+      
+      p: x 				// prints the int value of x which is 2
+      p: "x: ", x, "y: ",  y 
+      p: "sum of x and y: ", sum
+      
+      >>>	// end 
+
